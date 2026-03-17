@@ -342,6 +342,13 @@ export class EncryptedMarkdownView extends MarkdownView {
   }
 
   async setState(state: any, result: any): Promise<void> {
+    // When the file is changing (navigation), remove any overlay from the
+    // previous file. Skip for mode-only changes (source↔preview) or state
+    // restoration on the same file so we don't remove freshly added overlays.
+    if (state.file && state.file !== this.file?.path) {
+      this.contentEl.querySelectorAll(".afe-locked-state").forEach(el => el.remove());
+    }
+
     if (this._isPlaintextMode) return super.setState(state, result);
 
     if (state.mode === "preview" && this.isSavingEnabled) {

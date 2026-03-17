@@ -171,6 +171,11 @@ export default class AFEPlugin extends Plugin {
     dispatchEvent(new Event("editingToolbar-NewCommand"));
   }
 
+  /** Refresh the ribbon icon to reflect current session state. */
+  refreshRibbonIcon(): void {
+    this.wholeNoteFeature?.updateRibbonIcon();
+  }
+
   async loadSettings(): Promise<void> {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
   }

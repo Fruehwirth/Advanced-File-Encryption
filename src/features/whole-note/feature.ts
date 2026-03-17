@@ -10,7 +10,7 @@
  * - Auto-encrypting new daily notes
  */
 
-import { TFile, TFolder, Notice, Menu, WorkspaceLeaf, MarkdownView, setIcon } from "obsidian";
+import { TFile, TFolder, Notice, Menu, WorkspaceLeaf, MarkdownView, setIcon, normalizePath } from "obsidian";
 import type { IAFEFeature } from "../feature-interface";
 import type AFEPlugin from "../../main";
 import { NoteConverter } from "./note-converter";
@@ -177,17 +177,32 @@ export class WholeNoteFeature implements IAFEFeature {
         // If an encrypted version already exists, the daily notes plugin
         // (or calendar, navbar, etc.) created a duplicate .md. Delete it
         // and open the .locked instead.
-        const lockedPath = file.path.replace(/\.md$/, `.${LOCKED_EXTENSION}`);
+        const lockedPath = normalizePath(file.path.replace(/\.md$/, `.${LOCKED_EXTENSION}`));
         const lockedFile = this.plugin.app.vault.getAbstractFileByPath(lockedPath);
         if (lockedFile instanceof TFile) {
           setTimeout(async () => {
+            // Navigate any leaf showing the duplicate .md away BEFORE
+            // deleting it to prevent Obsidian's "file not found" error.
+            const leavesToRedirect: WorkspaceLeaf[] = [];
+            this.plugin.app.workspace.iterateAllLeaves((leaf) => {
+              if (
+                leaf.view instanceof MarkdownView &&
+                (leaf.view as any).file?.path === file.path
+              ) {
+                leavesToRedirect.push(leaf);
+              }
+            });
+            for (const leaf of leavesToRedirect) {
+              await leaf.setViewState({ type: "empty", state: {} });
+            }
+
             // Delete the duplicate .md
             const current = this.plugin.app.vault.getAbstractFileByPath(file.path);
             if (current instanceof TFile) {
               await this.plugin.app.vault.delete(current);
             }
             // Open the encrypted version
-            const leaf = this.plugin.app.workspace.getLeaf(false);
+            const leaf = leavesToRedirect[0] ?? this.plugin.app.workspace.getLeaf(false);
             await leaf.openFile(lockedFile);
           }, 100);
           return;
@@ -231,10 +246,10 @@ export class WholeNoteFeature implements IAFEFeature {
     // Generate unique filename
     let baseName = "Encrypted note";
     let counter = 0;
-    let filePath = `${targetFolder.path}/${baseName}.${LOCKED_EXTENSION}`;
+    let filePath = normalizePath(`${targetFolder.path}/${baseName}.${LOCKED_EXTENSION}`);
     while (this.plugin.app.vault.getAbstractFileByPath(filePath)) {
       counter++;
-      filePath = `${targetFolder.path}/${baseName} ${counter}.${LOCKED_EXTENSION}`;
+      filePath = normalizePath(`${targetFolder.path}/${baseName} ${counter}.${LOCKED_EXTENSION}`);
     }
 
     // Create a pending (uninitialized) .locked file — the view will detect
@@ -318,9 +333,9 @@ export class WholeNoteFeature implements IAFEFeature {
       const original = command.callback;
       command.callback = async () => {
         const today = (window as any).moment().format(format);
-        const lockedPath = folder
+        const lockedPath = normalizePath(folder
           ? `${folder}/${today}.${LOCKED_EXTENSION}`
-          : `${today}.${LOCKED_EXTENSION}`;
+          : `${today}.${LOCKED_EXTENSION}`);
 
         const lockedFile = this.plugin.app.vault.getAbstractFileByPath(lockedPath);
         if (lockedFile instanceof TFile) {
@@ -399,7 +414,7 @@ export class WholeNoteFeature implements IAFEFeature {
     const plaintext = await this.plugin.app.vault.read(current);
     const encryptedJson = await encode(plaintext, password, hint);
     const oldPath = current.path;
-    const newPath = current.path.replace(/\.md$/, `.${LOCKED_EXTENSION}`);
+    const newPath = normalizePath(current.path.replace(/\.md$/, `.${LOCKED_EXTENSION}`));
 
     // Find editor leaves (MarkdownView only, not sidebar panels)
     const leaves: WorkspaceLeaf[] = [];
@@ -426,7 +441,7 @@ export class WholeNoteFeature implements IAFEFeature {
     this.plugin.sessionManager.put(newPath, password, hint);
 
     // Encrypt on disk while no view displays the file
-    await this.plugin.app.vault.modify(current, encryptedJson);
+    await this.plugin.app.vault.process(current, () => encryptedJson);
     await this.plugin.app.fileManager.renameFile(current, newPath);
 
     // Open the encrypted file — EncryptedMarkdownView loads and auto-decrypts
@@ -458,7 +473,7 @@ export class WholeNoteFeature implements IAFEFeature {
    * - lock-keyhole + "Set session password": no passwords stored
    * - rotate-ccw-key + "Lock all encrypted notes": session active
    */
-  private updateRibbonIcon(): void {
+  updateRibbonIcon(): void {
     if (!this.ribbonIconEl) return;
     const hasSession = this.plugin.sessionManager.hasEntries();
     const icon = hasSession ? "rotate-ccw-key" : "lock-keyhole";
