@@ -146,7 +146,7 @@ export class PasswordModal extends Modal {
       cls: "afe-input afe-password-input",
     });
 
-    const toggle = inputWrapper.createDiv("afe-eye-toggle");
+    const toggle = inputWrapper.createEl("button", { cls: "afe-eye-toggle", type: "button" });
     setIcon(toggle, defaultType === "password" ? "eye" : "eye-off");
     toggle.setAttribute("aria-label", "Toggle password visibility");
     toggle.addEventListener("click", () => {

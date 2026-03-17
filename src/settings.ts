@@ -8,19 +8,19 @@ import type { SessionMode } from "./services/session-manager";
 
 const SESSION_MODE_DESCRIPTIONS: Record<SessionMode, { name: string; desc: string }> = {
   "session-password": {
-    name: "Session Password (Recommended)",
+    name: "Session password (recommended)",
     desc: "Your password is kept in memory for the session duration so you don't have to re-enter it for every file. It auto-expires after the configured timeout. Best balance of convenience and security.",
   },
   "timed-password": {
-    name: "Timed Password",
+    name: "Timed password",
     desc: "Your password is briefly kept in memory after you enter it, allowing you to open multiple files quickly. After the timeout, it's discarded and you'll need to enter it again.",
   },
   "keys-only": {
-    name: "Keys Only",
+    name: "Keys only",
     desc: "Only cryptographic keys are kept in memory \u2014 your password is discarded immediately after use. Most secure option, but you'll need to re-enter your password for each new file you open.",
   },
   "no-storage": {
-    name: "No Storage",
+    name: "No storage",
     desc: "Nothing is stored in memory. Every time you open or switch to an encrypted file, you must enter the password. Maximum security, least convenient.",
   },
 };
@@ -37,10 +37,8 @@ export class AFESettingsTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    containerEl.createEl("h2", { text: "Advanced File Encryption" });
-
     // --- Session Security Mode ---
-    containerEl.createEl("h3", { text: "Session Security" });
+    new Setting(containerEl).setHeading().setName("Session security");
 
     new Setting(containerEl)
       .setName("Security mode")
@@ -100,7 +98,7 @@ export class AFESettingsTab extends PluginSettingTab {
     }
 
     // --- Encryption ---
-    containerEl.createEl("h3", { text: "Encryption" });
+    new Setting(containerEl).setHeading().setName("Encryption");
 
     new Setting(containerEl)
       .setName("Confirm password")
@@ -141,7 +139,7 @@ export class AFESettingsTab extends PluginSettingTab {
     const hasDailyNoteNavbar = !!(this.plugin.app as any).plugins?.plugins?.["daily-note-navbar"];
 
     if (hasDailyNotes || hasManualSorting || hasDailyNoteNavbar) {
-      containerEl.createEl("h3", { text: "Integration" });
+      new Setting(containerEl).setHeading().setName("Integration");
 
       if (hasDailyNotes) {
         new Setting(containerEl)

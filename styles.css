@@ -75,12 +75,13 @@
   background: var(--background-primary);
   color: var(--text-normal);
   font-size: var(--font-ui-medium);
-  outline: none;
   transition: border-color 0.15s ease;
 }
 
-.afe-input:focus {
+.afe-input:focus-visible {
   border-color: var(--interactive-accent);
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: -1px;
 }
 
 .afe-input::placeholder {
@@ -107,12 +108,16 @@
   cursor: pointer;
   color: var(--text-faint);
   padding: 0.25em;
-  border-radius: var(--radius-s);
   transition: color 0.15s ease;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
 .afe-eye-toggle:hover {
   color: var(--text-muted);
+  background: transparent !important;
 }
 
 .afe-eye-toggle svg {
@@ -210,8 +215,8 @@
   font-size: var(--font-ui-smaller);
 }
 
-.afe-input-error {
-  border-color: var(--text-error) !important;
+.afe-input.afe-input-error {
+  border-color: var(--text-error);
 }
 
 .afe-unlock-card .afe-field-group {
