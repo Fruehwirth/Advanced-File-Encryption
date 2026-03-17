@@ -1,7 +1,7 @@
 {
   "id": "advanced-file-encryption",
   "name": "Advanced File Encryption",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "minAppVersion": "1.0.3",
   "description": "Transparent whole-note encryption. Notes are encrypted on disk but appear as normal markdown in the editor. Keys and plaintext exist only in memory.",
   "author": "fruehwirth",
